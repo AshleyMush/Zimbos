@@ -41,10 +41,15 @@ def add_to_basket():
         return jsonify({'success': False, 'message': 'Group already purchased.'}), 400
 
     # Enforce checkout limit
+
     limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
+    print(( f"⭐ Limit: {limit}"))
     purchased_count = PurchasedItem.query.filter_by(user_id=current_user.id).count()
     basket_count = PurchasedItem.query.filter_by(user_id=current_user.id).count()
+    print(f"⭐ Purchased Item{PurchasedItem.query.first()} Count: ", purchased_count)
+    print(f"⭐ Purchased Count: {purchased_count}, Basket Count: {basket_count}")
     if purchased_count + basket_count >= limit:
+        print(f"⭐ Checkout limit reached: {purchased_count + basket_count} >= {limit}")
         return jsonify({'success': False, 'message': 'Checkout limit reached.'}), 400
 
     # Prevent duplicates in basket
