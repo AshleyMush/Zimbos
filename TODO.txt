@@ -1,0 +1,19 @@
+
+No flash messages for user already logged in, no redirect to avoid sql integrity error
+
+Give chatgpt your routes so it understands the context
+
+Email Feautures pending
+Add forgot password feature where the user receives an email with a link to reset their password. The link should be valid for a limited time (e.g., 1 hour). Use a secure token for the link and store it in the database with an expiration time. When the user clicks the link, they should be taken to a page where they can enter a new password. After submitting the new password, update the user's password in the database and invalidate the token.
+Add email verification feature where the user receives an email with a link to verify their email address after registration. The link should be valid for a limited time (e.g., 24 hours). Use a secure token for the link and store it in the database with an expiration time. When the user clicks the link, update their account to mark it as verified.
+Add an email feature to welcome feautre where the user will have to activate their account by clicking a link in the email. The link should be valid for a limited time (e.g., 24 hours). Use a secure token for the link and store it in the database with an expiration time. When the user clicks the link, update their account to mark it as activated.
+Add a feature to send the user's the group links via email after they check out. This is the last step of the email feautre. (If there is an api that helps with this then lets use it instead of building this from scratch but it has to be free. Otherwise we build the feature)
+Add a feature to send the user a welcome email after they register. This email should include a link to the login page and a brief introduction to the platform. (If there is an api that helps with this then lets use it instead of building this from scratch but it has to be free. Otherwise we build the feature)
+
+
+Add picture_filename to be able to upload the picture from a local file and another column where I can add a link from s3 for the picture and make the template show either the uploaded picture. All groups pictures should share the same picture however when displaying we will but the group name on the picture to differenciate it
+
+
+
+Add the dashboard.html:
+If data.count==3 then all the Add to basket buttons should be disabled

@@ -1,0 +1,60 @@
+{% extends './base.html' %}
+{% block title %}Checkout Confirmation{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  {{ form.hidden_tag() }}
+  <h2>Confirm Checkout</h2>
+  <p>Review the groups you're about to join. You can remove any before confirming.</p>
+
+  <ul class="list-group mb-4" id="checkout-list">
+    {% for group in groups %}
+    <li class="list-group-item d-flex justify-content-between align-items-center" data-id="{{ group.id }}">
+      {{ group.name }}
+      <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-id="{{ group.id }}">Remove</button>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <p>Total selected: <span id="total-count">{{ basket_count }}</span> / {{ limit }}</p>
+
+  <form method="POST" action="{{ url_for('main.checkout') }}">
+    {{ form.hidden_tag() }}
+    <button type="submit" class="btn btn-success me-2" id="confirm-btn" {% if basket_count == 0 %}disabled{% endif %}>Confirm Checkout</button>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    function removeHandler(event) {
+      const btn = event.currentTarget;
+      const gid = btn.getAttribute('data-id');
+      fetch("{{ url_for('main.remove_from_basket') }}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ group_id: gid })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const li = document.querySelector(`#checkout-list li[data-id="${gid}"]`);
+          if (li) li.remove();
+          const newCount = data.basket_count;
+          document.getElementById('total-count').textContent = newCount;
+          document.getElementById('confirm-btn').disabled = newCount === 0;
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(err => console.error('Error removing item:', err));
+    }
+    document.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', removeHandler));
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends './base.html' %}
+
+{% block title %}{{ action }} Group{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2>{{ action }} Group</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      {{ form.name.label(class_='form-label') }}
+      {{ form.name(class_='form-control') }}
+    </div>
+    <div class="mb-3">
+      {{ form.url.label(class_='form-label') }}
+      {{ form.url(class_='form-control') }}
+    </div>
+    <div class="mb-3">
+      {{ form.description.label(class_='form-label') }}
+      {{ form.description(class_='form-control', rows=4) }}
+    </div>
+    <div class="mb-3">
+      {{ form.picture_filename.label(class_='form-label') }}
+      {{ form.picture_filename(class_='form-control') }}
+    </div>
+    <div class="mb-3">
+      {{ form.member_count.label(class_='form-label') }}
+      {{ form.member_count(class_='form-control') }}
+    </div>
+    {{ form.submit(class_='btn btn-primary') }}
+  </form>
+</div>
+{% endblock %}

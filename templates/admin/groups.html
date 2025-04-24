@@ -1,0 +1,26 @@
+{% extends './base.html' %}
+
+{% block title %}Manage Groups{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Groups</h2>
+  <a href="{{ url_for('admin.create_group') }}" class="btn btn-primary mb-3">New Group</a>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Members</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for g in groups %}
+      <tr>
+        <td>{{ g.name }}</td>
+        <td>{{ g.member_count }}</td>
+        <td>
+          <a href="{{ url_for('admin.edit_group', group_id=g.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+          <form action="{{ url_for('admin.delete_group', group_id=g.id) }}" method="POST" style="display:inline;">
+            <button class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
