@@ -59,6 +59,24 @@ class Group(db.Model):
     def __repr__(self):
         return f"<Group {self.id} {self.name}>"
 
+
+class BasketItem(db.Model):
+    """
+    Association model linking a User to a Group in the user's basket.
+
+    Attributes:
+        id (int): Primary key.
+        user_id (int): Foreign key to the User model.
+        group_id (int): Foreign key to the Group model.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=False)
+
+    def __repr__(self):
+        return f"<BasketItem {self.id} User:{self.user_id} Group:{self.group_id}>"
+
+
 class PurchasedItem(db.Model):
     """
     Association model linking a User to a Group in the user's basket.

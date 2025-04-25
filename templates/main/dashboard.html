@@ -12,6 +12,19 @@
   {% set basket_count = basket_ids | length %}
   {% set limit = config['GROUP_CHECKOUT_LIMIT'] %}
 
+  {# List current basket items #}
+  {% if basket_ids %}
+  <div class="alert alert-info">
+    <strong>In your cart:</strong>
+    <ul>
+      {% for gid in basket_ids %}
+        {% set g = groups | selectattr('id','equalto', gid) | first %}
+        <li>{{ g.name }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
   <h2>Your Dashboard</h2>
   <div class="row">
     <!-- Group Cards -->
@@ -56,19 +69,7 @@
           </h5>
           <small class="text-muted">{{ purchased_ids|length }} joined already</small>
         </div>
-        <!-- Already Joined List -->
-        {% if purchased_ids %}
-        <div class="card-body">
-          <h6>Groups You’ve Joined</h6>
-          <ul class="list-group mb-3">
-            {% for pid in purchased_ids %}
-            {% set pg = groups|selectattr('id','equalto',pid)|first %}
-            <li class="list-group-item">{{ pg.name }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-        <ul class="list-group list-group-flush" id="basket-list" id="basket-list" style="max-height:70vh; overflow-y:auto;">
+        <ul class="list-group list-group-flush" id="basket-list" style="max-height:70vh; overflow-y:auto;">
           {% for gid in basket_ids %}
           {% set g = groups|selectattr('id','equalto',gid)|first %}
           <li class="list-group-item d-flex justify-content-between align-items-center" data-id="{{ gid }}">
@@ -87,64 +88,67 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const csrfToken = document.querySelector('#csrf-form input[name="csrf_token"]').value;
+  document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('#csrf-form input[name="csrf_token"]').value;
 
-  function attachRemove(btn) {
-    btn.addEventListener('click', () => {
-      const gid = btn.dataset.id;
-      fetch(`{{ url_for('main.remove_from_basket') }}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({ group_id: gid })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          document.querySelector(`#basket-list li[data-id='${gid}']`).remove();
-          const addBtn = document.querySelector(`.basket-btn[data-id='${gid}']`);
-          if (addBtn) {
-            addBtn.disabled = false;
-            addBtn.textContent = 'Add to Cart';
-          }
-          document.getElementById('basket-count').textContent = data.basket_count;
-        } else alert(data.message);
+    // Remove handler
+    function attachRemove(btn) {
+      btn.addEventListener('click', () => {
+        const gid = btn.dataset.id;
+        fetch(`{{ url_for('main.remove_from_basket') }}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify({ group_id: gid })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.querySelector(`#basket-list li[data-id='${gid}']`).remove();
+            const addBtn = document.querySelector(`.basket-btn[data-id='${gid}']`);
+            if (addBtn) {
+              addBtn.disabled = false;
+              addBtn.textContent = 'Add to Cart';
+            }
+            document.getElementById('basket-count').textContent = data.basket_count;
+          } else alert(data.message);
+        });
       });
-    });
-  }
+    }
 
-  document.querySelectorAll('.remove-btn').forEach(btn => attachRemove(btn));
+    // Attach remove handlers
+    document.querySelectorAll('.remove-btn').forEach(btn => attachRemove(btn));
 
-  document.querySelectorAll('.basket-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const gid = btn.dataset.id;
-      fetch(`{{ url_for('main.add_to_basket') }}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({ group_id: gid })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.success) return alert(data.message);
-        btn.disabled = true;
-        btn.textContent = 'Added to Cart';
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.dataset.id = gid;
-        li.innerHTML = `${btn.dataset.name} <button class="btn btn-sm btn-outline-danger remove-btn" data-id="${gid}">Remove</button>`;
-        document.getElementById('basket-list').appendChild(li);
-        attachRemove(li.querySelector('.remove-btn'));
-        document.getElementById('basket-count').textContent = data.basket_count;
+    // Add to Cart handler
+    document.querySelectorAll('.basket-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const gid = btn.dataset.id;
+        fetch(`{{ url_for('main.add_to_basket') }}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify({ group_id: gid })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) return alert(data.message);
+          btn.disabled = true;
+          btn.textContent = 'Added to Cart';
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          li.dataset.id = gid;
+          li.innerHTML = `${btn.dataset.name} <button class="btn btn-sm btn-outline-danger remove-btn" data-id="${gid}">Remove</button>`;
+          document.getElementById('basket-list').appendChild(li);
+          attachRemove(li.querySelector('.remove-btn'));
+          document.getElementById('basket-count').textContent = data.basket_count;
+        });
       });
     });
   });
-});
 </script>
 {% endblock %}
 {% endblock %}
