@@ -22,7 +22,7 @@ def dashboard():
     """
     Render dashboard with all groups, current basket IDs, and CSRF form.
     """
-    form = CSRFForm()
+    form = CSRFProtectForm()
     groups = Group.query.all()
     basket_ids = [item.group_id for item in current_user.basket_items]
     print(f"⭐ Basket IDs: {basket_ids}")
@@ -97,10 +97,9 @@ def checkout():
     user = current_user
     basket_items = current_user.basket_items
 
-    form = CSRFForm()
+    form = CSRFProtectForm()
     if request.method == 'POST':
-        if not form.validate_on_submit():
-            return jsonify({'success': False, 'message': 'Invalid request.'}), 400
+
 
         limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
         if len(user.purchased_items) + len(basket_items) > limit:
@@ -133,6 +132,7 @@ def checkout():
 @login_required
 def remove_from_checkout():
     """AJAX endpoint to remove a group while on the checkout page."""
+    print(f"⭐ Remove from checkout called with data: {request.json} {request.form}")
     user = current_user
     group_id = request.json.get('group_id') or request.form.get('group_id')
     if not group_id:
@@ -151,9 +151,7 @@ def remove_from_checkout():
 @login_required
 def send_group_links():
     """Send purchased group links via email (placeholder)."""
-    form = CSRFForm()
-    if not form.validate_on_submit():
-        return jsonify({'success': False, 'message': 'Invalid request.'}), 400
+    form = CSRFProtectForm()
 
     purchased_groups = [item.group for item in current_user.purchased_items]
     links = [

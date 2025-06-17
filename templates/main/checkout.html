@@ -33,7 +33,7 @@
     function removeHandler(event) {
       const btn = event.currentTarget;
       const gid = btn.getAttribute('data-id');
-      fetch("{{ url_for('main.remove_from_basket') }}", {
+      fetch("{{ url_for('main.remove_from_checkout') }}", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
