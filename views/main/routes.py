@@ -132,7 +132,7 @@ def checkout():
 @login_required
 def remove_from_checkout():
     """AJAX endpoint to remove a group while on the checkout page."""
-    print(f"⭐ Remove from checkout called with data: {request.json} {request.form}")
+
     user = current_user
     group_id = request.json.get('group_id') or request.form.get('group_id')
     if not group_id:
@@ -151,6 +151,7 @@ def remove_from_checkout():
 @login_required
 def send_group_links():
     """Send purchased group links via email (placeholder)."""
+    print("⭐ Sending group links via email... Current user:", current_user.email)
     form = CSRFProtectForm()
 
     purchased_groups = [item.group for item in current_user.purchased_items]
