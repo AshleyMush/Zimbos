@@ -103,3 +103,19 @@ class PurchasedItem(db.Model):
 
     def __repr__(self):
         return f"<PurchasedItem {self.id} User:{self.user_id} Group:{self.group_id}>"
+
+
+class InviteToken(db.Model):
+    """Temporary token granting access to a group."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=False)
+    token = db.Column(db.String(64), unique=True, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User', backref='invite_tokens', lazy=True)
+    group = db.relationship('Group', backref='invite_tokens', lazy=True)
+
+    def __repr__(self):
+        return f"<InviteToken {self.token} User:{self.user_id} Group:{self.group_id}>"

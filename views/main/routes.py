@@ -2,8 +2,10 @@ from . import main_bp
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
-from models import db, Group, BasketItem, PurchasedItem
+from models import db, Group, BasketItem, PurchasedItem, InviteToken
 from forms import CSRFProtectForm
+from datetime import datetime, timedelta
+import secrets
 
 
 class CSRFForm(FlaskForm):
@@ -110,6 +112,16 @@ def checkout():
             group = Group.query.get(item.group_id)
             if group:
                 group.member_count += 1
+            token_str = secrets.token_urlsafe(16)
+            expires = datetime.utcnow() + timedelta(hours=1)
+            db.session.add(
+                InviteToken(
+                    user_id=user.id,
+                    group_id=item.group_id,
+                    token=token_str,
+                    expires_at=expires,
+                )
+            )
             db.session.delete(item)
             purchased_ids.append(item.group_id)
         db.session.commit()
@@ -151,12 +163,16 @@ def remove_from_checkout():
 
 def _generate_group_links():
     """Helper to build purchased group link data."""
-    purchased_groups = [item.group for item in current_user.purchased_items]
-    return [
-        {'id': g.id, 'name': g.name, 'url': g.url}
-        for g in purchased_groups
-        if g is not None
-    ]
+    tokens = InviteToken.query.filter(
+        InviteToken.user_id == current_user.id,
+        InviteToken.expires_at > datetime.utcnow(),
+    ).all()
+    links = []
+    for t in tokens:
+        if t.group:
+            invite_url = url_for('main.join_group', token=t.token, _external=True)
+            links.append({'id': t.group.id, 'name': t.group.name, 'url': invite_url})
+    return links
 
 @main_bp.route('/send_group_links', methods=['POST'])
 @login_required
@@ -170,3 +186,14 @@ def send_group_links():
     # TODO: Integrate Mailgun to send `links` to current_user.email
 
     return jsonify({'success': True, 'links': links}), 200
+
+
+@main_bp.route('/join/<token>')
+def join_group(token):
+    """Redirect to the real group URL if token is valid."""
+    invite = InviteToken.query.filter_by(token=token).first_or_404()
+    if invite.expires_at < datetime.utcnow():
+        flash('Invite link has expired.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    group = Group.query.get_or_404(invite.group_id)
+    return redirect(group.url)
