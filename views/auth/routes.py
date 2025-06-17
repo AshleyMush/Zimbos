@@ -40,34 +40,31 @@ def register():
     return render_template('auth/register.html', form=form)
 
 
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    Handle user login; redirect Admins to admin dashboard and Users to main dashboard.
-    """
     if current_user.is_authenticated:
         return redirect(url_for('admin.list_groups') if current_user.role == 'Admin' else url_for('main.dashboard'))
+
     form = LoginForm()
 
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
 
-        if  user.is_blacklisted:
-            flash('Your account has been banned.', 'danger')
-
         if user and verify_password(user.password, form.password.data):
-            flash('Logged in successfully', 'success')
-            login_user(user, remember=form.remember.data)
+            if user.is_blacklisted:
+                flash('Your account has been banned.', 'danger')
+                return redirect(url_for('auth.login'))
 
-            # Role-based redirect
+            login_user(user, remember=form.remember.data)
+            flash('Logged in successfully', 'success')
+
             if user.role == 'Admin':
-                return redirect(url_for('admin.list_groups'))
+                return redirect(url_for('admin.list_groups.'))
             return redirect(url_for('main.dashboard'))
-            flash('Login unsuccessful. Check email and password.', 'danger')
+
+        flash('Login unsuccessful. Check email and password.', 'danger')
 
     return render_template('auth/login.html', form=form)
-
 
 
 @auth_bp.route('/logout')
