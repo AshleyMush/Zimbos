@@ -1,7 +1,10 @@
 {% extends './base.html' %}
 {% block title %}Checkout Confirmation{% endblock %}
 {% block content %}
-<div class="container mt-5">
+<div id="checkout-container" class="container mt-5"
+     data-remove-url="{{ url_for('main.remove_from_checkout') }}"
+     data-checkout-url="{{ url_for('main.checkout') }}"
+     data-dashboard-url="{{ url_for('main.dashboard') }}">
   <!-- CSRF token for AJAX requests -->
   <form id="csrf-form" style="display:none;">
     {{ form.hidden_tag() }}
@@ -27,72 +30,5 @@
 
 
 {% block scripts %}
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    function removeHandler(event) {
-      const btn = event.currentTarget;
-      const gid = btn.getAttribute('data-id');
-      fetch("{{ url_for('main.remove_from_checkout') }}", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({ group_id: gid })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          const li = document.querySelector(`#checkout-list li[data-id="${gid}"]`);
-          if (li) li.remove();
-          const newCount = data.basket_count;
-          document.getElementById('total-count').textContent = newCount;
-          document.getElementById('confirm-btn').disabled = newCount === 0;
-        } else {
-          alert(data.message);
-        }
-      })
-      .catch(err => console.error('Error removing item:', err));
-    }
-    document.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', removeHandler));
-
-      // Confirm checkout via AJAX
-    document.getElementById('confirm-btn').addEventListener('click', function(evt) {
-      evt.preventDefault();
-      fetch("{{ url_for('main.checkout') }}", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          // After checkout, trigger email of group links
-          fetch("{{ url_for('main.send_group_links') }}", {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrfToken
-            }
-          })
-          .then(res => res.json())
-          .then(emailData => {
-            if (emailData.success) {
-              window.location.href = "{{ url_for('main.dashboard') }}";
-            } else {
-              alert(emailData.message);
-            }
-          })
-          .catch(err => console.error('Error sending email:', err));
-        } else {
-          alert(data.message);
-        }
-      })
-      .catch(err => console.error('Error confirming checkout:', err));
-    });
-  });
-</script>
+<script src="{{ url_for('static', filename='js/checkout.js') }}"></script>
 {% endblock %}

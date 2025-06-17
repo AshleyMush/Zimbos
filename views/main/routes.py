@@ -100,7 +100,6 @@ def checkout():
     form = CSRFProtectForm()
     if request.method == 'POST':
 
-
         limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
         if len(user.purchased_items) + len(basket_items) > limit:
             return jsonify({'success': False, 'message': 'Checkout limit reached.'}), 400
@@ -115,7 +114,9 @@ def checkout():
             purchased_ids.append(item.group_id)
         db.session.commit()
 
-        return jsonify({'success': True, 'purchased_ids': purchased_ids}), 200
+        links = _generate_group_links()
+
+        return jsonify({'success': True, 'purchased_ids': purchased_ids, 'links': links}), 200
 
     groups = [Group.query.get(item.group_id) for item in basket_items]
     limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
@@ -147,6 +148,16 @@ def remove_from_checkout():
     new_basket_ids = [i.group_id for i in current_user.basket_items]
     return jsonify({'success': True, 'basket_count': len(new_basket_ids), 'basket_ids': new_basket_ids}), 200
 
+
+def _generate_group_links():
+    """Helper to build purchased group link data."""
+    purchased_groups = [item.group for item in current_user.purchased_items]
+    return [
+        {'id': g.id, 'name': g.name, 'url': g.url}
+        for g in purchased_groups
+        if g is not None
+    ]
+
 @main_bp.route('/send_group_links', methods=['POST'])
 @login_required
 def send_group_links():
@@ -154,14 +165,8 @@ def send_group_links():
     print("⭐ Sending group links via email... Current user:", current_user.email)
     form = CSRFProtectForm()
 
-    purchased_groups = [item.group for item in current_user.purchased_items]
-    links = [
-        {'id': g.id, 'name': g.name, 'url': g.url}
-        for g in purchased_groups
-        if g is not None
-    ]
+    links = _generate_group_links()
 
     # TODO: Integrate Mailgun to send `links` to current_user.email
 
-# Note: checkout POST and tokenization to follow in Task E
     return jsonify({'success': True, 'links': links}), 200
