@@ -42,3 +42,10 @@ class GroupForm(FlaskForm):
     picture_filename = StringField('Picture Filename', validators=[Optional(), Length(max=255)])
     member_count = IntegerField('Member Count', validators=[Optional(), NumberRange(min=0)])
     submit = SubmitField('Save Group')
+
+
+class CSRFProtectForm(FlaskForm):
+    """
+    Empty form just for CSRF protection in AJAX requests.
+    """
+    pass

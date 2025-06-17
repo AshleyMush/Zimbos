@@ -2,7 +2,10 @@
 {% block title %}Checkout Confirmation{% endblock %}
 {% block content %}
 <div class="container mt-5">
-  {{ form.hidden_tag() }}
+  <!-- CSRF token for AJAX requests -->
+  <form id="csrf-form" style="display:none;">
+    {{ form.hidden_tag() }}
+  </form>
   <h2>Confirm Checkout</h2>
   <p>Review the groups you're about to join. You can remove any before confirming.</p>
 
@@ -17,13 +20,11 @@
 
   <p>Total selected: <span id="total-count">{{ basket_count }}</span> / {{ limit }}</p>
 
-  <form method="POST" action="{{ url_for('main.checkout') }}">
-    {{ form.hidden_tag() }}
-    <button type="submit" class="btn btn-success me-2" id="confirm-btn" {% if basket_count == 0 %}disabled{% endif %}>Confirm Checkout</button>
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-  </form>
+  <button type="button" class="btn btn-success me-2" id="confirm-btn" {% if basket_count == 0 %}disabled{% endif %}>Confirm Checkout</button>
+  <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
 </div>
 {% endblock %}
+
 
 {% block scripts %}
 <script>
@@ -55,6 +56,43 @@
       .catch(err => console.error('Error removing item:', err));
     }
     document.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', removeHandler));
+
+      // Confirm checkout via AJAX
+    document.getElementById('confirm-btn').addEventListener('click', function(evt) {
+      evt.preventDefault();
+      fetch("{{ url_for('main.checkout') }}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // After checkout, trigger email of group links
+          fetch("{{ url_for('main.send_group_links') }}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            }
+          })
+          .then(res => res.json())
+          .then(emailData => {
+            if (emailData.success) {
+              window.location.href = "{{ url_for('main.dashboard') }}";
+            } else {
+              alert(emailData.message);
+            }
+          })
+          .catch(err => console.error('Error sending email:', err));
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(err => console.error('Error confirming checkout:', err));
+    });
   });
 </script>
 {% endblock %}
