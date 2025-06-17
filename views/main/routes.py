@@ -24,6 +24,8 @@ def dashboard():
     form = CSRFForm()
     groups = Group.query.all()
     basket_ids = [item.group_id for item in current_user.basket_items]
+    print(f"⭐ Basket IDs: {basket_ids}")
+    print(f"⭐current_user basket items:  {current_user.basket_items}  Groups:{groups}")
     return render_template('main/dashboard.html', groups=groups, basket_ids=basket_ids, form=form)
 
 
@@ -38,18 +40,19 @@ def add_to_basket():
     group_id = int(group_id)
 
     # Check if already purchased
-    already_purchased = PurchasedItem.query.filter_by(user_id=user.id, group_id=group_id).first()
+    already_purchased = any(item.group_id == group_id for item in current_user.purchased_items)
     if already_purchased:
         return jsonify({'success': False, 'message': 'Group already purchased.'}), 400
 
     # Enforce checkout limit
-    limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
-    purchased_count = PurchasedItem.query.filter_by(user_id=user.id).count()
-    basket_count = BasketItem.query.filter_by(user_id=user.id).count()
-    print(f"⭐ Purchased Count: {purchased_count}, Basket Count: {basket_count}")
-    if purchased_count + basket_count >= limit:
-        print(f"⭐ Checkout limit reached: {purchased_count + basket_count} >= {limit}")
-        return jsonify({'success': False, 'message': 'Checkout limit reached.'}), 400
+    checkout_limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
+    purchased_count = len(current_user.purchased_items)
+    basket_count = len(current_user.basket_items)+1  # +1 for the new item being added
+
+    print(f"⭐ Purchased Count: {purchased_count}, Basket Count: {basket_count }- Basket Count Type: {type(basket_count)}")
+    if purchased_count + basket_count > checkout_limit:
+        print(f"⭐ Checkout limit reached: {purchased_count + basket_count} >= {checkout_limit}")
+        return jsonify({'success': False, 'message': f'Checkout limit {checkout_limit} reached.'}), 400
 
     # Prevent duplicates in basket
     existing = BasketItem.query.filter_by(user_id=user.id, group_id=group_id).first()
@@ -62,11 +65,9 @@ def add_to_basket():
     db.session.commit()
 
 
-    # Check if the group is already in the basket
-    #TODO: i added in basket to check whats in the basket and it works kinda
-    in_basket = BasketItem.query.filter_by(user_id=user.id).all()
+    in_basket = current_user.basket_items
     print(f"⭐ Basket Count: {basket_count} Basket IDs: {in_basket}")
-    return jsonify({'success': True, 'basket_count': basket_count.id}), 200
+    return jsonify({'success': True, 'basket_count': basket_count}), 200
 
 
 @main_bp.route('/remove_from_basket', methods=['POST'])

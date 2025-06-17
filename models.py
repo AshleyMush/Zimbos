@@ -19,7 +19,8 @@ class User(UserMixin, db.Model):
         phone (str): Contact phone number.
         is_active (bool): Whether the user has confirmed email.
         is_admin (bool): Whether the user has admin privileges.
-        basket_items (list): Relationship to PurchasedItem entries.
+        basket_items (list): Relationship to BasketItem entries.
+        purchased_items (list): Relationship to PurchasedItem entries.
     """
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -30,7 +31,11 @@ class User(UserMixin, db.Model):
     is_blacklisted = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(20), default='User')
 
-    basket_items = db.relationship('PurchasedItem', backref='user', lazy=True)
+    # Items currently in the user's basket
+    basket_items = db.relationship('BasketItem', backref='user', lazy=True)
+
+    # Items the user has already purchased
+    purchased_items = db.relationship('PurchasedItem', backref='user', lazy=True)
 
     def __repr__(self):
         return f"<User {self.id} {self.email}>"
@@ -46,7 +51,8 @@ class Group(db.Model):
         description (str): Text description of the group.
         picture_filename (str): Filename for the group's image.
         member_count (int): Number of times the group URL has been used.
-        basket_items (list): Relationship to PurchasedItem entries.
+        basket_items (list): Relationship to BasketItem entries.
+        purchased_items (list): Relationship to PurchasedItem entries.
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -54,7 +60,11 @@ class Group(db.Model):
     description = db.Column(db.Text)
     picture_filename = db.Column(db.String(255))
     member_count = db.Column(db.Integer, default=0)
-    basket_items = db.relationship('PurchasedItem', backref='group', lazy=True)
+    # Items currently in baskets
+    basket_items = db.relationship('BasketItem', backref='group', lazy=True)
+
+    # Items that have been purchased
+    purchased_items = db.relationship('PurchasedItem', backref='group', lazy=True)
 
     def __repr__(self):
         return f"<Group {self.id} {self.name}>"
