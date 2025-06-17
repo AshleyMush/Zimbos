@@ -1,8 +1,8 @@
 from . import admin_bp
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app, abort
 from flask_login import login_required, current_user
 from models import db, User, Group
-from forms import GroupForm  # import CheckoutLimitForm when ready
+from forms import GroupForm, CSRFProtectForm  # import CheckoutLimitForm when ready
 from utililties.decorators import roles_required
 
 
@@ -78,6 +78,10 @@ def edit_group(group_id):
 @roles_required('Admin')
 @login_required
 def delete_group(group_id):
+    form = CSRFProtectForm()
+    if not form.validate_on_submit():
+        abort(400)
+
     # user = current_user
     group = Group.query.get_or_404(group_id)
     db.session.delete(group)
@@ -104,5 +108,9 @@ def configure_checkout_limit():
     #     flash(f'Checkout limit set to {new_limit}', 'success')
     #     return redirect(url_for('admin.list_groups'))
     # return render_template('checkout_limit_form.html', form=form)
+    form = CSRFProtectForm()
+    if request.method == 'POST' and not form.validate_on_submit():
+        abort(400)
+
     flash('Checkout limit configuration placeholder.', 'info')
     return redirect(url_for('admin.list_groups'))

@@ -34,6 +34,10 @@ def dashboard():
 @login_required
 def add_to_basket():
     """AJAX endpoint to add a group to basket."""
+    form = CSRFProtectForm()
+    if not form.validate_on_submit():
+        return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
+
     user = current_user
     group_id = request.json.get('group_id') or request.form.get('group_id')
     if not group_id:
@@ -75,6 +79,10 @@ def add_to_basket():
 @login_required
 def remove_from_basket():
     """AJAX endpoint to remove a group from basket."""
+    form = CSRFProtectForm()
+    if not form.validate_on_submit():
+        return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
+
     user = current_user
     group_id = request.json.get('group_id') or request.form.get('group_id')
     if not group_id:
@@ -99,6 +107,8 @@ def checkout():
 
     form = CSRFProtectForm()
     if request.method == 'POST':
+        if not form.validate_on_submit():
+            return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
 
         limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
         if len(user.purchased_items) + len(basket_items) > limit:
@@ -133,6 +143,9 @@ def checkout():
 @login_required
 def remove_from_checkout():
     """AJAX endpoint to remove a group while on the checkout page."""
+    form = CSRFProtectForm()
+    if not form.validate_on_submit():
+        return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
 
     user = current_user
     group_id = request.json.get('group_id') or request.form.get('group_id')
@@ -164,6 +177,8 @@ def send_group_links():
     """Send purchased group links via email (placeholder)."""
     print("⭐ Sending group links via email... Current user:", current_user.email)
     form = CSRFProtectForm()
+    if not form.validate_on_submit():
+        return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
 
     links = _generate_group_links()
 

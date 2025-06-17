@@ -1,13 +1,14 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_login import LoginManager
+from flask_wtf import CSRFProtect
 from views.auth.routes import auth_bp
 from views.main.routes import main_bp
 from views.admin.routes import admin_bp
-from flask_login import LoginManager
 from models import User
 from models import db
 from flask_migrate import Migrate, upgrade
-from flask import Flask, render_template
+
+csrf = CSRFProtect()
 
 
 
@@ -15,6 +16,8 @@ from flask import Flask, render_template
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
+
+    csrf.init_app(app)
 
 
 
