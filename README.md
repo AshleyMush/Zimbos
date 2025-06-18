@@ -80,5 +80,5 @@ Basic user analytics dashboard
 Have ideas to make the Zimbos experience better?
 Fork the repo, open an issue, or submit a pull request.
 
-🔗 Developer
+#🔗 Developer
 Visit ashleytanaka.dev for more projects and updates.
