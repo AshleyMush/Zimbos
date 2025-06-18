@@ -1,4 +1,4 @@
-🌍 Zimbos Portal
+# 🌍 Zimbos Portal
 Zimbos Portal is a Flask web app designed to simplify and secure access to curated WhatsApp and online groups. Users can sign up, browse available groups, add them to a basket, and check out to receive private, time-limited invite links. Admins have full control to manage groups and users from a dedicated dashboard.
 
 🧺 Browse and add groups.
