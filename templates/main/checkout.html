@@ -11,6 +11,7 @@
   </form>
   <h2>Confirm Checkout</h2>
   <p>Review the groups you're about to join. You can remove any before confirming.</p>
+    <p class="text-muted">You can only join up to {{ limit }} groups at a timeand the group links will be send to your email address</p>
 
   <ul class="list-group mb-4" id="checkout-list">
     {% for group in groups %}
@@ -23,7 +24,7 @@
 
   <p>Total selected: <span id="total-count">{{ basket_count }}</span> / {{ limit }}</p>
 
-  <button type="button" class="btn btn-success me-2" id="confirm-btn" {% if basket_count == 0 %}disabled{% endif %}>Confirm Checkout</button>
+  <a href="{{ url_for('main.checkout') }}" class="btn btn-success me-2" id="confirm-btn" {% if basket_count == 0 %}disabled{% endif %}>Confirm Checkout</a>
   <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
 </div>
 {% endblock %}

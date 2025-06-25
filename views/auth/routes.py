@@ -59,7 +59,7 @@ def login():
             flash('Logged in successfully', 'success')
 
             if user.role == 'Admin':
-                return redirect(url_for('admin.list_groups.'))
+                return redirect(url_for('admin.list_groups'))
             return redirect(url_for('main.dashboard'))
 
         flash('Login unsuccessful. Check email and password.', 'danger')
