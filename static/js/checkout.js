@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Content-Type': 'application/json',
         'X-CSRFToken': csrfToken
       },
+      credentials: 'same-origin',
       body: JSON.stringify({ group_id: gid })
     })
     .then(res => res.json())
@@ -42,7 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': csrfToken
-      }
+      },
+      credentials: 'same-origin'
     })
     .then(res => res.json())
     .then(data => {
