@@ -18,7 +18,9 @@
 {% block scripts %}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const csrfToken = document.querySelector('#csrf-form input[name="csrf_token"]').value;
+    const csrfInput = document.querySelector('#csrf-form input[name="csrf_token"]');
+    if (!csrfInput) return;
+    const csrfToken = csrfInput.value;
 
     // Remove handler
     function attachRemove(btn) {
