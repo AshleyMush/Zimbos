@@ -7,6 +7,8 @@ from views.admin.routes import admin_bp
 from models import User
 from models import db
 from flask_migrate import Migrate, upgrade
+from forms import CSRFProtectForm
+
 
 csrf = CSRFProtect()
 
@@ -18,6 +20,11 @@ def create_app():
     app.config.from_object('config.Config')
 
     csrf.init_app(app)
+
+    # Inject csrf_form into every template
+    @app.context_processor
+    def inject_csrf_form():
+        return {'csrf_form': CSRFProtectForm()}
 
 
 

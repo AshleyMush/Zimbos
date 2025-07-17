@@ -2,14 +2,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('checkout-container');
   if (!container) return;
 
-  const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+  const csrfToken = document.querySelector('#csrf-form input[name="csrf_token"]').value;
   const removeUrl = container.dataset.removeUrl;
   const checkoutUrl = container.dataset.checkoutUrl;
   const dashboardUrl = container.dataset.dashboardUrl;
 
+  // Handle removal of a group item during checkout
   function removeHandler(event) {
     const btn = event.currentTarget;
     const gid = btn.getAttribute('data-id');
+
     fetch(removeUrl, {
       method: 'POST',
       headers: {
@@ -17,16 +19,19 @@ document.addEventListener('DOMContentLoaded', () => {
         'X-CSRFToken': csrfToken
       },
       credentials: 'same-origin',
-      body: JSON.stringify({ group_id: gid })
+      body: JSON.stringify({ group_id: gid, csrf_token: csrfToken })
     })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        const li = document.querySelector(`#checkout-list li[data-id="${gid}"]`);
+        // Remove the <li> from the DOM
+        const li = document.querySelector(`#checkout-list li[data-id=\"${gid}\"]`);
         if (li) li.remove();
-        const newCount = data.basket_count;
-        document.getElementById('total-count').textContent = newCount;
-        document.getElementById('confirm-btn').disabled = newCount === 0;
+
+        // Update the total count and button state
+        const totalCountEl = document.getElementById('total-count');
+        totalCountEl.textContent = data.basket_count;
+        document.getElementById('confirm-btn').disabled = data.basket_count === 0;
       } else {
         alert(data.message);
       }
@@ -34,8 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error('Error removing item:', err));
   }
 
+  // Attach removeHandler to all remove buttons
   document.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', removeHandler));
 
+  // Confirm checkout remains unchanged
   document.getElementById('confirm-btn').addEventListener('click', evt => {
     evt.preventDefault();
     fetch(checkoutUrl, {
@@ -44,12 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
         'Content-Type': 'application/json',
         'X-CSRFToken': csrfToken
       },
-      credentials: 'same-origin'
+      credentials: 'same-origin',
+      body: JSON.stringify({ csrf_token: csrfToken })
     })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        console.log('Checkout response:', data);
         window.location.href = dashboardUrl;
       } else {
         alert(data.message);

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Your Zimbos Group Invites</title>
+</head>
+<body>
+  <p>Hi {{ user.username }},</p>
+  <p>Here are your group invite links. Each link expires in 1 hour:</p>
+  <ul>
+    {% for link in links %}
+      <li><a href="{{ link.url }}">{{ link.name }}</a></li>
+    {% endfor %}
+  </ul>
+  <p>Welcome to our digital village!</p>
+  <p>— The Zimbos admin Team</p>
+  <p>🌐: www.zimbos.org</p>
+</body>
+</html>

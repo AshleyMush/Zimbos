@@ -6,9 +6,10 @@
      data-checkout-url="{{ url_for('main.checkout') }}"
      data-dashboard-url="{{ url_for('main.dashboard') }}">
   <!-- CSRF token for AJAX requests -->
-  <form id="csrf-form" style="display:none;">
-    {{ form.hidden_tag() }}
-  </form>
+<form id="csrf-form" style="display:none;">
+  {{ form.csrf_token }}
+</form>
+
   <h2>Confirm Checkout</h2>
   <p>Review the groups you're about to join. You can remove any before confirming.</p>
     <p class="text-muted">You can only join up to {{ limit }} groups at a timeand the group links will be send to your email address</p>

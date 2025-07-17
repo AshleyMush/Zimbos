@@ -2,7 +2,7 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <div class="container-fluid mt-5">
-  <!-- CSRF via WTForms -->
+  <!-- CSRF Protection -->
   <form id="csrf-form" style="display:none;">
     {{ form.hidden_tag() }}
   </form>
@@ -46,7 +46,7 @@
                 data-name="{{ group.name }}"
                 {% if group.id in basket_ids or group.id in purchased_ids %}disabled{% endif %}>
                 {% if group.id in purchased_ids %}
-                  Purchased
+                  Already Joined
                 {% elif group.id in basket_ids %}
                   Added to Cart
                 {% else %}

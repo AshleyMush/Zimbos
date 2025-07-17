@@ -6,11 +6,11 @@ from models import db, Group, BasketItem, PurchasedItem, InviteToken
 from forms import CSRFProtectForm
 from datetime import datetime, timedelta
 import secrets
+import requests
+import os
+from mailgun.client import Client
 
 
-class CSRFForm(FlaskForm):
-    """Empty form just for CSRF protection in AJAX"""
-    pass
 
 
 @main_bp.route('/')
@@ -108,11 +108,12 @@ def checkout():
     basket_items = current_user.basket_items
 
     form = CSRFProtectForm()
-    if request.method == 'POST':
+    if form.validate_on_submit():
         if not form.validate_on_submit():
             return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
 
         limit = current_app.config.get('GROUP_CHECKOUT_LIMIT', 3)
+
         if len(user.purchased_items) + len(basket_items) > limit:
             return jsonify({'success': False, 'message': 'Checkout limit reached.'}), 400
 
@@ -123,7 +124,7 @@ def checkout():
             if group:
                 group.member_count += 1
             token_str = secrets.token_urlsafe(16)
-            expires = datetime.utcnow() + timedelta(hours=1)
+            expires = datetime.utcnow() + timedelta(minutes=15)
             db.session.add(
                 InviteToken(
                     user_id=user.id,
@@ -190,17 +191,31 @@ def _generate_group_links():
 @main_bp.route('/send_group_links', methods=['POST'])
 @login_required
 def send_group_links():
-    """Send purchased group links via email (placeholder)."""
-    print("⭐ Sending group links via email... Current user:", current_user.email)
     form = CSRFProtectForm()
     if not form.validate_on_submit():
         return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
 
     links = _generate_group_links()
+    if not links:
+        return jsonify({'success': False, 'message': 'No active invites to send.'}), 400
 
-    # TODO: Integrate Mailgun to send `links` to current_user.email
+    # Render both text and HTML
+    text_body = render_template('emails/invite.txt', user=current_user, links=links)
+    html_body = render_template('emails/invite.html', user=current_user, links=links)
 
-    return jsonify({'success': True, 'links': links}), 200
+    mg = Client(
+        domain=current_app.config['MAILGUN_DOMAIN'],
+        api_key=current_app.config['MAILGUN_API_KEY']
+    )
+    mg.send_message({
+        "from": f"Zimbos Portal <no-reply@{current_app.config['MAILGUN_DOMAIN']}>",
+        "to": [current_user.email],
+        "subject": "Your Zimbos Group Invite Links",
+        "text": text_body,
+        "html": html_body,
+    })
+
+    return jsonify({'success': True}), 200
 
 
 @main_bp.route('/join/<token>')
