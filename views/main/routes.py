@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 import secrets
 import requests
 import os
-from mailgun.client import Client
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 
 
@@ -56,9 +57,7 @@ def add_to_basket():
     purchased_count = len(current_user.purchased_items)
     basket_count = len(current_user.basket_items)+1  # +1 for the new item being added
 
-    print(f"⭐ Purchased Count: {purchased_count}, Basket Count: {basket_count }- Basket Count Type: {type(basket_count)}")
     if purchased_count + basket_count > checkout_limit:
-        print(f"⭐ Checkout limit reached: {purchased_count + basket_count} >= {checkout_limit}")
         return jsonify({'success': False, 'message': f'Checkout limit {checkout_limit} reached.'}), 400
 
     # Prevent duplicates in basket
@@ -73,7 +72,6 @@ def add_to_basket():
 
 
     in_basket = current_user.basket_items
-    print(f"⭐ Basket Count: {basket_count} Basket IDs: {in_basket}")
     return jsonify({'success': True, 'basket_count': basket_count}), 200
 
 
@@ -191,6 +189,7 @@ def _generate_group_links():
 @main_bp.route('/send_group_links', methods=['POST'])
 @login_required
 def send_group_links():
+    print("Sending group links via email...")
     form = CSRFProtectForm()
     if not form.validate_on_submit():
         return jsonify({'success': False, 'message': 'Invalid CSRF token.'}), 400
@@ -203,17 +202,23 @@ def send_group_links():
     text_body = render_template('emails/invite.txt', user=current_user, links=links)
     html_body = render_template('emails/invite.html', user=current_user, links=links)
 
-    mg = Client(
-        domain=current_app.config['MAILGUN_DOMAIN'],
-        api_key=current_app.config['MAILGUN_API_KEY']
-    )
-    mg.send_message({
-        "from": f"Zimbos Portal <no-reply@{current_app.config['MAILGUN_DOMAIN']}>",
-        "to": [current_user.email],
-        "subject": "Your Zimbos Group Invite Links",
-        "text": text_body,
-        "html": html_body,
-    })
+    message = Mail(
+        from_email= f"Zimbos Portal <no-reply@zimbos.org",
+        to_emails= [current_user.email],
+        subject=  "Your Zimbos Group Invite Links",
+        html_content= html_body)
+
+    try:
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        sg.set_sendgrid_data_residency("eu")
+        response = sg.send(message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(e.message)
+
+
 
     return jsonify({'success': True}), 200
 
