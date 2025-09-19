@@ -1,51 +1,25 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('checkout-container');
-  if (!container) return;
+document.getElementById('confirm-btn').addEventListener('click', evt => {
+  evt.preventDefault();
 
-  const csrfToken = document.querySelector('#csrf-form input[name="csrf_token"]').value;
-  const removeUrl = container.dataset.removeUrl;
-  const checkoutUrl = container.dataset.checkoutUrl;
-  const dashboardUrl = container.dataset.dashboardUrl;
+  // Step 1: Confirm Checkout
+  fetch(checkoutUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({ csrf_token: csrfToken })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      alert(data.message);
+      return;
+    }
 
-  // Handle removal of a group item during checkout
-  function removeHandler(event) {
-    const btn = event.currentTarget;
-    const gid = btn.getAttribute('data-id');
-
-    fetch(removeUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify({ group_id: gid, csrf_token: csrfToken })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        // Remove the <li> from the DOM
-        const li = document.querySelector(`#checkout-list li[data-id=\"${gid}\"]`);
-        if (li) li.remove();
-
-        // Update the total count and button state
-        const totalCountEl = document.getElementById('total-count');
-        totalCountEl.textContent = data.basket_count;
-        document.getElementById('confirm-btn').disabled = data.basket_count === 0;
-      } else {
-        alert(data.message);
-      }
-    })
-    .catch(err => console.error('Error removing item:', err));
-  }
-
-  // Attach removeHandler to all remove buttons
-  document.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', removeHandler));
-
-  // Confirm checkout remains unchanged
-  document.getElementById('confirm-btn').addEventListener('click', evt => {
-    evt.preventDefault();
-    fetch(checkoutUrl, {
+    // Step 2: Send Email
+    fetch('/send_group_links', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,13 +29,23 @@ document.addEventListener('DOMContentLoaded', () => {
       body: JSON.stringify({ csrf_token: csrfToken })
     })
     .then(res => res.json())
-    .then(data => {
-      if (data.success) {
+    .then(emailData => {
+      if (emailData.success) {
+        alert("✅ Checkout complete! Group links sent to your email.");
         window.location.href = dashboardUrl;
       } else {
-        alert(data.message);
+        alert("⚠️ Checkout complete, but email failed: " + emailData.message);
       }
     })
-    .catch(err => console.error('Error confirming checkout:', err));
+    .catch(err => {
+      console.error("Error sending email:", err);
+      alert("⚠️ Checkout complete, but failed to send email.");
+      window.location.href = dashboardUrl;
+    });
+
+  })
+  .catch(err => {
+    console.error('Checkout error:', err);
+    alert("❌ Checkout failed. Please try again.");
   });
 });

@@ -203,7 +203,7 @@ def send_group_links():
     html_body = render_template('emails/invite.html', user=current_user, links=links)
 
     message = Mail(
-        from_email= f"Zimbos Portal <no-reply@zimbos.org",
+        from_email="Zimbos Portal <no-reply@zimbos.org>",
         to_emails= [current_user.email],
         subject=  "Your Zimbos Group Invite Links",
         html_content= html_body)
@@ -216,7 +216,8 @@ def send_group_links():
         print(response.body)
         print(response.headers)
     except Exception as e:
-        print(e.message)
+        current_app.logger.error("SendGrid error: %s", str(e))
+
 
 
 
@@ -225,7 +226,7 @@ def send_group_links():
 
 @main_bp.route('/join/<token>')
 def join_group(token):
-    """Redirect to the real group URL if token is valid."""
+    """Redirect to the real group URL if token is valid. """
     invite = InviteToken.query.filter_by(token=token).first_or_404()
     if invite.expires_at < datetime.utcnow():
         flash('Invite link has expired.', 'danger')
